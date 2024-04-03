@@ -15,6 +15,12 @@ pub(crate) struct Slab<T> {
 }
 
 impl<T> Slab<T> {
+    pub(crate) fn new() -> Self {
+        Self {
+            slab: tokio_slab::Slab::new(),
+        }
+    }
+
     pub(crate) fn insert(&mut self, data: T) -> SlabIndex {
         SlabIndex::new(self.slab.insert(data))
     }

@@ -1,13 +1,24 @@
+use std::collections::HashMap;
+
 use crate::{
+    detached::DetachedTree,
     node::{Node, NodeId, NodePtr, Relatives},
     slab::Slab,
-    detached::DetachedTree,
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Tree<T> {
     slab: Slab<Node<T>>,
     pub(crate) root_id: Option<NodeId>,
+}
+
+impl<T> Default for Tree<T> {
+    fn default() -> Self {
+        Self {
+            slab: Slab::new(),
+            root_id: Default::default(),
+        }
+    }
 }
 
 impl<T> Tree<T> {
@@ -193,5 +204,42 @@ impl<T> Tree<T> {
 
     pub fn detach<'a>(&'a mut self, node_id: NodeId) -> DetachedTree<'a, T> {
         self.try_detach(node_id).unwrap()
+    }
+}
+
+impl<T: Clone> Tree<T> {
+    pub fn clone_from_node(&self, from_node_id: Option<NodeId>) -> Tree<T> {
+        let mut new_tree = Tree::default();
+        let from_node_id = from_node_id.or(self.try_root_id());
+
+        // cloned is a HashMap to translate node_id -> new_node_id
+        let mut cloned = if let Some(from_node_id) = from_node_id {
+            let new_root_id = new_tree.set_root(self.get(from_node_id).data.clone());
+            let mut cloned = HashMap::new();
+            cloned.insert(from_node_id, new_root_id);
+            cloned
+        } else {
+            // if Tree is empty, new Tree is empty too
+            return new_tree;
+        };
+
+        // parents are responsible for cloning their children and need to be cloned first
+        // traversal level order will guarantee this restriction
+        for parent_id in self.traversal_level_order(from_node_id) {
+            let new_parent_id = *cloned.get(&parent_id).unwrap();
+            for child_id in self.children(parent_id) {
+                let new_child_id =
+                    new_tree.append_child(new_parent_id, self.data(child_id).clone());
+                cloned.insert(child_id, new_child_id);
+            }
+        }
+
+        new_tree
+    }
+}
+
+impl<T: Clone> Clone for Tree<T> {
+    fn clone(&self) -> Self {
+        self.clone_from_node(None)
     }
 }

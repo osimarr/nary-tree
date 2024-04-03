@@ -92,21 +92,45 @@ fn main() {
         .unwrap();
     println!("{:?} == {}", node2_id, tree.data(node2_id));
 
-    let subtree = tree.detach(id4);
-    println!("root_id = {:?}", subtree.root_id());
+    println!("Detached:");
+    let detached = tree.detach(id4);
+    println!("root_id = {:?}", detached.root_id());
     println!(
         "{:?}",
-        subtree
+        detached
             .traversal_level_order(None)
-            .map(|n| subtree.data(n))
+            .map(|n| detached.data(n))
             .collect::<Vec<_>>()
     );
-    drop(subtree);
+    let detached_clone = detached.clone();
+    drop(detached);
 
+    println!("Detached Clone:");
+    println!(
+        "{:?}",
+        detached_clone
+            .traversal_level_order(None)
+            .map(|n| detached_clone.data(n))
+            .collect::<Vec<_>>()
+    );
+
+    println!("Tree minus detached nodes:");
     println!(
         "{:?}",
         tree.traversal_level_order(None)
             .map(|n| tree.data(n))
+            .collect::<Vec<_>>()
+    );
+
+    let cloned_tree = tree.clone();
+    drop(tree);
+
+    println!("Cloned Tree:");
+    println!(
+        "{:?}",
+        cloned_tree
+            .traversal_level_order(None)
+            .map(|n| cloned_tree.data(n))
             .collect::<Vec<_>>()
     );
 }
