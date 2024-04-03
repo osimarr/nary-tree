@@ -50,7 +50,7 @@ impl<T> Tree<T> {
         &mut self.get_mut(node_id).data
     }
 
-    pub fn create_nodeptr<'a>(&'a self, node_id: NodeId) -> NodePtr<'a, T> {
+    pub fn create_nodeptr(&self, node_id: NodeId) -> NodePtr<'_, T> {
         assert!(self.node_exists(node_id));
         NodePtr::new(self, node_id)
     }
@@ -165,7 +165,7 @@ impl<T> Tree<T> {
         self.try_remove(node_id).unwrap()
     }
 
-    fn try_detach_node<'a>(&'a mut self, node_id: NodeId) -> Option<NodeId> {
+    fn try_detach_node(&mut self, node_id: NodeId) -> Option<NodeId> {
         let relatives = *self.try_relatives_of(node_id)?;
 
         let mut parent_relative = if let Some(parent) = relatives.parent {
@@ -197,12 +197,12 @@ impl<T> Tree<T> {
         Some(node_id)
     }
 
-    pub fn try_detach<'a>(&'a mut self, node_id: NodeId) -> Option<DetachedTree<'a, T>> {
+    pub fn try_detach(&mut self, node_id: NodeId) -> Option<DetachedTree<'_, T>> {
         let detached_id = self.try_detach_node(node_id)?;
         Some(DetachedTree::new(self, detached_id))
     }
 
-    pub fn detach<'a>(&'a mut self, node_id: NodeId) -> DetachedTree<'a, T> {
+    pub fn detach(&mut self, node_id: NodeId) -> DetachedTree<'_, T> {
         self.try_detach(node_id).unwrap()
     }
 }

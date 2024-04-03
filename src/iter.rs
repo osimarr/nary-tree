@@ -2,17 +2,19 @@ use std::collections::VecDeque;
 
 use crate::{node::NodeId, tree::Tree};
 
+pub type TreeIterator<'a, T, C> = dyn Fn(&'a Tree<T>, &mut C) -> Option<NodeId>;
+
 pub struct TreeIter<'a, T, C> {
     tree: &'a Tree<T>,
     context: C,
-    iterator: Box<dyn Fn(&'a Tree<T>, &mut C) -> Option<NodeId>>,
+    iterator: Box<TreeIterator<'a, T, C>>,
 }
 
 impl<'a, T, C> TreeIter<'a, T, C> {
     pub(crate) fn new(
         tree: &'a Tree<T>,
         context: C,
-        iterator: Box<dyn Fn(&'a Tree<T>, &mut C) -> Option<NodeId>>,
+        iterator: Box<TreeIterator<'a, T, C>>,
     ) -> Self {
         Self {
             tree,
@@ -31,7 +33,7 @@ impl<'a, T, C> Iterator for TreeIter<'a, T, C> {
 }
 
 impl<T> Tree<T> {
-    pub fn children<'a>(&'a self, from_node_id: NodeId) -> TreeIter<'a, T, Option<NodeId>> {
+    pub fn children(&self, from_node_id: NodeId) -> TreeIter<'_, T, Option<NodeId>> {
         let initial_context = self.get(from_node_id).relatives.first_child;
         TreeIter::new(
             self,
@@ -47,10 +49,10 @@ impl<T> Tree<T> {
         )
     }
 
-    pub fn leftmost_path_to_leaf<'a>(
-        &'a self,
+    pub fn leftmost_path_to_leaf(
+        &self,
         from_node_id: Option<NodeId>,
-    ) -> TreeIter<'a, T, Option<NodeId>> {
+    ) -> TreeIter<'_, T, Option<NodeId>> {
         let initial_context = from_node_id.or(self.try_root_id());
         TreeIter::new(
             self,
@@ -66,10 +68,10 @@ impl<T> Tree<T> {
         )
     }
 
-    pub fn rightmost_path_to_leaf<'a>(
-        &'a self,
+    pub fn rightmost_path_to_leaf(
+        &self,
         from_node_id: Option<NodeId>,
-    ) -> TreeIter<'a, T, Option<NodeId>> {
+    ) -> TreeIter<'_, T, Option<NodeId>> {
         let initial_context = from_node_id.or(self.try_root_id());
         TreeIter::new(
             self,
@@ -85,10 +87,10 @@ impl<T> Tree<T> {
         )
     }
 
-    pub fn traversal_depth_first_post_order<'a>(
-        &'a self,
+    pub fn traversal_depth_first_post_order(
+        &self,
         from_node_id: Option<NodeId>,
-    ) -> TreeIter<'a, T, Vec<NodeId>> {
+    ) -> TreeIter<'_, T, Vec<NodeId>> {
         let initial_context = self
             .leftmost_path_to_leaf(from_node_id.or(self.try_root_id()))
             .collect();
@@ -105,10 +107,10 @@ impl<T> Tree<T> {
         )
     }
 
-    pub fn traversal_level_order<'a>(
-        &'a self,
+    pub fn traversal_level_order(
+        &self,
         from_node_id: Option<NodeId>,
-    ) -> TreeIter<'a, T, (VecDeque<NodeId>, VecDeque<NodeId>)> {
+    ) -> TreeIter<'_, T, (VecDeque<NodeId>, VecDeque<NodeId>)> {
         let mut initial_context = (
             VecDeque::with_capacity(1), // start of a level's fifo
             VecDeque::with_capacity(1), // fifo
@@ -140,7 +142,7 @@ impl<T> Tree<T> {
     pub fn traversal_user_custom<'a, C>(
         &'a self,
         context: C,
-        iterator: Box<dyn Fn(&'a Tree<T>, &mut C) -> Option<NodeId>>,
+        iterator: Box<TreeIterator<'a, T, C>>,
     ) -> TreeIter<'a, T, C> {
         TreeIter::new(self, context, iterator)
     }

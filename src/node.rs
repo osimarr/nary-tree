@@ -73,7 +73,7 @@ impl<'a, T> NodePtr<'a, T> {
     }
 
     pub fn try_walk_to(&mut self, relative: RelativeType) -> Option<&mut NodePtr<'a, T>> {
-        let relative = relative.get_id(&self.relatives())?;
+        let relative = relative.get_id(self.relatives())?;
         self.node_id = relative;
         Some(self)
     }
