@@ -22,6 +22,13 @@ impl<T> Default for Tree<T> {
 }
 
 impl<T> Tree<T> {
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            slab: Slab::with_capacity(capacity),
+            root_id: Default::default(),
+        }
+    }
+
     pub fn node_exists(&self, node_id: NodeId) -> bool {
         self.slab.exists(node_id.index)
     }

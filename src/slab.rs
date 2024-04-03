@@ -21,6 +21,12 @@ impl<T> Slab<T> {
         }
     }
 
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
+        Self {
+            slab: tokio_slab::Slab::with_capacity(capacity),
+        }
+    }
+
     pub(crate) fn insert(&mut self, data: T) -> SlabIndex {
         SlabIndex::new(self.slab.insert(data))
     }
