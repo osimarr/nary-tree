@@ -1,13 +1,16 @@
+use uuid::Uuid;
+
 use crate::{slab::SlabIndex, tree::Tree};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NodeId {
     pub(crate) index: SlabIndex,
+    pub(crate) tree_uuid: Uuid,
 }
 
 impl NodeId {
-    pub(crate) fn new(index: SlabIndex) -> Self {
-        Self { index }
+    pub(crate) fn new(index: SlabIndex, tree_uuid: Uuid) -> Self {
+        Self { index, tree_uuid }
     }
 }
 

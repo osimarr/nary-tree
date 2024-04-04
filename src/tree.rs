@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use uuid::Uuid;
+
 use crate::{
     detached::DetachedTree,
     node::{Node, NodeId, NodePtr, Relatives},
@@ -9,6 +11,7 @@ use crate::{
 #[derive(Debug)]
 pub struct Tree<T> {
     slab: Slab<T>,
+    uuid: Uuid,
     pub(crate) root_id: Option<NodeId>,
 }
 
@@ -16,6 +19,7 @@ impl<T> Default for Tree<T> {
     fn default() -> Self {
         Self {
             slab: Slab::new(),
+            uuid: Uuid::now_v7(),
             root_id: Default::default(),
         }
     }
@@ -25,8 +29,13 @@ impl<T> Tree<T> {
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             slab: Slab::with_capacity(capacity),
+            uuid: Uuid::now_v7(),
             root_id: Default::default(),
         }
+    }
+
+    fn match_uuid(&self, node_id: NodeId) -> bool {
+        node_id.tree_uuid == self.uuid
     }
 
     pub fn node_exists(&self, node_id: NodeId) -> bool {
@@ -34,6 +43,9 @@ impl<T> Tree<T> {
     }
 
     pub(crate) fn try_get(&self, node_id: NodeId) -> Option<&Node<T>> {
+        if !self.match_uuid(node_id) {
+            return None;
+        }
         self.slab.try_get(node_id.index)
     }
 
@@ -42,6 +54,9 @@ impl<T> Tree<T> {
     }
 
     pub(crate) fn try_get_mut(&mut self, node_id: NodeId) -> Option<&mut Node<T>> {
+        if !self.match_uuid(node_id) {
+            return None;
+        }
         self.slab.try_get_mut(node_id.index)
     }
 
@@ -72,7 +87,10 @@ impl<T> Tree<T> {
 
     pub fn set_root(&mut self, data: T) -> NodeId {
         assert!(self.root_id.is_none());
-        let root_id = NodeId::new(self.slab.insert(Node::new(data, self.slab.generation())));
+        let root_id = NodeId::new(
+            self.slab.insert(Node::new(data, self.slab.generation())),
+            self.uuid,
+        );
         self.root_id = Some(root_id);
         root_id
     }
@@ -88,7 +106,7 @@ impl<T> Tree<T> {
     pub fn append_child(&mut self, parent_id: NodeId, data: T) -> NodeId {
         assert!(self.node_exists(parent_id));
         let mut parent_relatives = *self.relatives_of(parent_id);
-        let new_child_id = NodeId::new(self.slab.next_index());
+        let new_child_id = NodeId::new(self.slab.next_index(), self.uuid);
         let mut new_child = Node::new(data, self.slab.generation());
         new_child.relatives.parent = Some(parent_id);
 
@@ -103,7 +121,7 @@ impl<T> Tree<T> {
         parent_relatives.last_child = Some(new_child_id);
         self.get_mut(parent_id).relatives = parent_relatives;
 
-        let ret_id = NodeId::new(self.slab.insert(new_child));
+        let ret_id = NodeId::new(self.slab.insert(new_child), self.uuid);
         assert_eq!(ret_id, new_child_id);
 
         new_child_id
@@ -112,7 +130,7 @@ impl<T> Tree<T> {
     pub fn prepend_child(&mut self, parent_id: NodeId, data: T) -> NodeId {
         assert!(self.node_exists(parent_id));
         let mut parent_relatives = *self.relatives_of(parent_id);
-        let new_child_id = NodeId::new(self.slab.next_index());
+        let new_child_id = NodeId::new(self.slab.next_index(), self.uuid);
         let mut new_child = Node::new(data, self.slab.generation());
         new_child.relatives.parent = Some(parent_id);
 
@@ -127,7 +145,7 @@ impl<T> Tree<T> {
         parent_relatives.first_child = Some(new_child_id);
         self.get_mut(parent_id).relatives = parent_relatives;
 
-        let ret_id = NodeId::new(self.slab.insert(new_child));
+        let ret_id = NodeId::new(self.slab.insert(new_child), self.uuid);
         assert_eq!(ret_id, new_child_id);
 
         new_child_id
