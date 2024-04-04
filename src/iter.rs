@@ -139,6 +139,22 @@ impl<T> Tree<T> {
         )
     }
 
+    pub fn ancestors(&self, from_node_id: NodeId) -> TreeIter<'_, T, Option<NodeId>> {
+        let initial_context = self.relatives_of(from_node_id).parent;
+        TreeIter::new(
+            self,
+            initial_context,
+            Box::new(|tree, context| {
+                if let Some(ancestor) = *context {
+                    *context = tree.relatives_of(ancestor).parent;
+                    Some(ancestor)
+                } else {
+                    None
+                }
+            }),
+        )
+    }
+
     pub fn traversal_user_custom<'a, C>(
         &'a self,
         context: C,

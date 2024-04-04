@@ -133,4 +133,17 @@ fn main() {
             .map(|n| cloned_tree.data(n))
             .collect::<Vec<_>>()
     );
+
+    let detached_id7 = detached_clone
+        .traversal_depth_first_post_order(None)
+        .find(|n| *detached_clone.data(*n) == 7)
+        .unwrap();
+    println!("Ancestors of 7:");
+    println!(
+        "{:?}",
+        detached_clone
+            .ancestors(detached_id7)
+            .map(|n| detached_clone.data(n))
+            .collect::<Vec<_>>()
+    );
 }
