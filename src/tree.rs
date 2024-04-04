@@ -230,6 +230,14 @@ impl<T> Tree<T> {
     pub fn detach(&mut self, node_id: NodeId) -> DetachedTree<'_, T> {
         self.try_detach(node_id).unwrap()
     }
+
+    pub fn capacity(&self) -> usize {
+        self.slab.capacity()
+    }
+
+    pub fn len(&self) -> usize {
+        self.slab.len()
+    }
 }
 
 impl<T: Clone> Tree<T> {

@@ -79,6 +79,14 @@ impl<T> Slab<T> {
     pub(crate) fn next_index(&self) -> SlabIndex {
         SlabIndex::new(self.slab.vacant_key(), self.generation())
     }
+
+    pub(crate) fn capacity(&self) -> usize {
+        self.slab.capacity()
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.slab.len()
+    }
 }
 
 #[cfg(test)]
@@ -90,7 +98,7 @@ mod tests {
         let capacity = 10usize;
         let slab: Slab<i32> = Slab::with_capacity(capacity);
 
-        assert_eq!(capacity, slab.slab.capacity());
+        assert_eq!(capacity, slab.capacity());
     }
 
     #[test]
@@ -106,9 +114,9 @@ mod tests {
     #[test]
     fn insert_increases_len() {
         let mut slab = Slab::default();
-        assert_eq!(slab.slab.len(), 0);
+        assert_eq!(slab.len(), 0);
         slab.insert(Node::new(1, slab.generation()));
-        assert_eq!(slab.slab.len(), 1);
+        assert_eq!(slab.len(), 1);
     }
 
     #[test]
