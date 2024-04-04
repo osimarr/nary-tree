@@ -33,8 +33,8 @@ impl<'a, T, C> Iterator for TreeIter<'a, T, C> {
 }
 
 impl<T> Tree<T> {
-    pub fn children(&self, from_node_id: NodeId) -> TreeIter<'_, T, Option<NodeId>> {
-        let initial_context = self.get(from_node_id).relatives.first_child;
+    pub fn children(&self, parent_id: NodeId) -> TreeIter<'_, T, Option<NodeId>> {
+        let initial_context = self.get(parent_id).relatives.first_child;
         TreeIter::new(
             self,
             initial_context,
