@@ -62,9 +62,9 @@ impl<T> Slab<T> {
     }
 
     pub(crate) fn try_remove(&mut self, index: SlabIndex) -> Option<Node<T>> {
-        self.slab.try_remove(index.key).and_then(|n| {
+        self.slab.try_remove(index.key).map(|n| {
             self.generation += 1;
-            Some(n)
+            n
         })
     }
 
