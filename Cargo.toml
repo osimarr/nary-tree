@@ -1,6 +1,6 @@
 [package]
 name = "nary_tree"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Ian <iwburns8@gmail.com>", "David Cohen <dacohen@pm.me>"]
 description = "A vec-backed tree structure with tree-specific generational indexes."
 documentation = "https://docs.rs/nary_tree"
