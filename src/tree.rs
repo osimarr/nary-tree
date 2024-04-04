@@ -8,7 +8,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Tree<T> {
-    slab: Slab<Node<T>>,
+    slab: Slab<T>,
     pub(crate) root_id: Option<NodeId>,
 }
 
@@ -72,7 +72,7 @@ impl<T> Tree<T> {
 
     pub fn set_root(&mut self, data: T) -> NodeId {
         assert!(self.root_id.is_none());
-        let root_id = NodeId::new(self.slab.insert(Node::new(data)));
+        let root_id = NodeId::new(self.slab.insert(Node::new(data, self.slab.generation())));
         self.root_id = Some(root_id);
         root_id
     }
@@ -89,7 +89,7 @@ impl<T> Tree<T> {
         assert!(self.node_exists(parent_id));
         let mut parent_relatives = *self.relatives_of(parent_id);
         let new_child_id = NodeId::new(self.slab.next_index());
-        let mut new_child = Node::new(data);
+        let mut new_child = Node::new(data, self.slab.generation());
         new_child.relatives.parent = Some(parent_id);
 
         if let Some(last_child_id) = parent_relatives.last_child {
@@ -113,7 +113,7 @@ impl<T> Tree<T> {
         assert!(self.node_exists(parent_id));
         let mut parent_relatives = *self.relatives_of(parent_id);
         let new_child_id = NodeId::new(self.slab.next_index());
-        let mut new_child = Node::new(data);
+        let mut new_child = Node::new(data, self.slab.generation());
         new_child.relatives.parent = Some(parent_id);
 
         if let Some(first_child_id) = parent_relatives.first_child {

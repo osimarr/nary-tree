@@ -45,13 +45,15 @@ pub struct Relatives {
 pub struct Node<T> {
     pub(crate) relatives: Relatives,
     pub(crate) data: T,
+    pub(crate) generation: usize,
 }
 
 impl<T> Node<T> {
-    pub(crate) fn new(data: T) -> Self {
+    pub(crate) fn new(data: T, generation: usize) -> Self {
         Self {
             relatives: Default::default(),
             data,
+            generation,
         }
     }
 }
