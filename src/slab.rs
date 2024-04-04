@@ -76,3 +76,110 @@ impl<T> Slab<T> {
         SlabIndex::new(self.slab.vacant_key(), self.generation())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_with_capacity() {
+        let capacity = 10usize;
+        let slab: Slab<i32> = Slab::with_capacity(capacity);
+
+        assert_eq!(capacity, slab.slab.capacity());
+    }
+
+    #[test]
+    fn remove_increases_generation() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        let generation = slab.generation();
+        slab.try_remove(index).unwrap();
+
+        assert_eq!(generation + 1, slab.generation());
+    }
+
+    #[test]
+    fn insert_increases_len() {
+        let mut slab = Slab::default();
+        assert_eq!(slab.slab.len(), 0);
+        slab.insert(Node::new(1, slab.generation()));
+        assert_eq!(slab.slab.len(), 1);
+    }
+
+    #[test]
+    fn insert_and_get() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        let node = slab.try_get(index).unwrap();
+        assert_eq!(node.data, 1);
+    }
+
+    #[test]
+    fn insert_and_get_mut() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        let node = slab.try_get_mut(index).unwrap();
+        assert_eq!(node.data, 1);
+        node.data = 2;
+        let node = slab.try_get_mut(index).unwrap();
+        assert_eq!(node.data, 2);
+    }
+
+    #[test]
+    fn insert_remove_get() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        assert!(slab.try_get(index).is_some());
+        slab.try_remove(index);
+        assert!(slab.try_get(index).is_none());
+    }
+
+    #[test]
+    fn remove_twice() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        assert!(slab.try_get(index).is_some());
+        let removed = slab.try_remove(index);
+        assert!(removed.is_some());
+        let removed = slab.try_remove(index);
+        assert!(removed.is_none());
+    }
+
+    #[test]
+    fn check_if_exists() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        assert!(slab.exists(index));
+        slab.try_remove(index);
+        assert!(!slab.exists(index));
+    }
+
+    #[test]
+    fn get_with_wrong_generation() {
+        let mut slab = Slab::default();
+        let mut index = slab.insert(Node::new(1, slab.generation()));
+        assert!(slab.exists(index));
+        index.generation += 1;
+        assert!(!slab.exists(index));
+    }
+
+    #[test]
+    fn get_mut_with_wrong_generation() {
+        let mut slab = Slab::default();
+        let mut index = slab.insert(Node::new(1, slab.generation()));
+        assert!(slab.try_get_mut(index).is_some());
+        index.generation += 1;
+        assert!(slab.try_get_mut(index).is_none());
+    }
+
+    #[test]
+    fn remove_with_wrong_generation() {
+        let mut slab = Slab::default();
+        let index = slab.insert(Node::new(1, slab.generation()));
+        assert!(slab.try_remove(index).is_some());
+        let mut index = slab.insert(Node::new(1, slab.generation()));
+        index.generation += 1;
+        assert!(slab.try_remove(index).is_none());
+    }
+}
