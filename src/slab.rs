@@ -62,6 +62,10 @@ impl<T> Slab<T> {
     }
 
     pub(crate) fn try_remove(&mut self, index: SlabIndex) -> Option<Node<T>> {
+        // try_get() does a generation check
+        if self.try_get(index).is_none() {
+            return None;
+        }
         self.slab.try_remove(index.key).map(|n| {
             self.generation += 1;
             n
