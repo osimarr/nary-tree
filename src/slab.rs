@@ -2,12 +2,12 @@ use crate::node::Node;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SlabIndex {
-    key: usize,
-    generation: usize,
+    pub(crate) key: usize,
+    pub(crate) generation: usize,
 }
 
 impl SlabIndex {
-    fn new(key: usize, generation: usize) -> Self {
+    pub(crate) fn new(key: usize, generation: usize) -> Self {
         Self { key, generation }
     }
 }
