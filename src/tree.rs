@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::{
-    detached::DetachedTree,
     node::{Node, NodeId, NodePtr, Relatives},
     slab::Slab,
+    subtree::SubTree,
 };
 
 #[derive(Debug)]
@@ -222,13 +222,24 @@ impl<T> Tree<T> {
         Some(node_id)
     }
 
-    pub fn try_detach(&mut self, node_id: NodeId) -> Option<DetachedTree<'_, T>> {
+    pub fn try_detach(&mut self, node_id: NodeId) -> Option<SubTree<'_, T>> {
         let detached_id = self.try_detach_node(node_id)?;
-        Some(DetachedTree::new(self, detached_id))
+        Some(SubTree::new_detached(self, detached_id))
     }
 
-    pub fn detach(&mut self, node_id: NodeId) -> DetachedTree<'_, T> {
+    pub fn detach(&mut self, node_id: NodeId) -> SubTree<'_, T> {
         self.try_detach(node_id).unwrap()
+    }
+
+    pub fn try_subtree(&mut self, subtree_root_id: NodeId) -> Option<SubTree<'_, T>> {
+        if !self.node_exists(subtree_root_id) {
+            return None;
+        }
+        Some(SubTree::new(self, subtree_root_id))
+    }
+
+    pub fn subtree(&mut self, subtree_root_id: NodeId) -> SubTree<'_, T> {
+        self.try_subtree(subtree_root_id).unwrap()
     }
 
     pub fn capacity(&self) -> usize {
