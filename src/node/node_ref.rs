@@ -1,3 +1,4 @@
+use crate::NodeId;
 use crate::iter::Ancestors;
 use crate::iter::LevelOrder;
 use crate::iter::NextSiblings;
@@ -5,7 +6,6 @@ use crate::iter::PostOrder;
 use crate::iter::PreOrder;
 use crate::node::Node;
 use crate::tree::Tree;
-use crate::NodeId;
 
 ///
 /// An immutable reference to a given `Node`'s data and its relatives.
@@ -16,7 +16,7 @@ pub struct NodeRef<'a, T> {
 }
 
 impl<'a, T> NodeRef<'a, T> {
-    pub(crate) fn new(node_id: NodeId, tree: &'a Tree<T>) -> NodeRef<T> {
+    pub(crate) fn new(node_id: NodeId, tree: &'a Tree<T>) -> NodeRef<'a, T> {
         NodeRef { node_id, tree }
     }
 

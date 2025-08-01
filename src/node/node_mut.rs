@@ -1,8 +1,8 @@
+use crate::NodeId;
 use crate::behaviors::RemoveBehavior;
 use crate::node::Node;
 use crate::node::NodeRef;
 use crate::tree::Tree;
-use crate::NodeId;
 
 ///
 /// A mutable reference to a given `Node`'s data and its relatives.

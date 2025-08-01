@@ -1,6 +1,6 @@
+use crate::NodeId;
 use crate::node::*;
 use crate::tree::Tree;
-use crate::NodeId;
 
 // todo: document this
 
@@ -10,7 +10,7 @@ pub struct Ancestors<'a, T> {
 }
 
 impl<'a, T> Ancestors<'a, T> {
-    pub(crate) fn new(node_id: Option<NodeId>, tree: &'a Tree<T>) -> Ancestors<T> {
+    pub(crate) fn new(node_id: Option<NodeId>, tree: &'a Tree<T>) -> Ancestors<'a, T> {
         Ancestors { node_id, tree }
     }
 }
@@ -36,7 +36,7 @@ pub struct NextSiblings<'a, T> {
 }
 
 impl<'a, T> NextSiblings<'a, T> {
-    pub(crate) fn new(node_id: Option<NodeId>, tree: &'a Tree<T>) -> NextSiblings<T> {
+    pub(crate) fn new(node_id: Option<NodeId>, tree: &'a Tree<T>) -> NextSiblings<'a, T> {
         NextSiblings { node_id, tree }
     }
 }

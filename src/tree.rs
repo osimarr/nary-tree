@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
+use crate::NodeId;
 use crate::behaviors::*;
 use crate::core_tree::CoreTree;
 use crate::node::*;
-use crate::NodeId;
 
 ///
 /// A `Tree` builder. Provides more control over how a `Tree` is created.

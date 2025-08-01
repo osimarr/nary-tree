@@ -1,6 +1,6 @@
+use crate::NodeId;
 use crate::node::Node;
 use crate::slab::{self, Slab};
-use crate::NodeId;
 use snowflake::ProcessUniqueId;
 
 ///
