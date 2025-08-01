@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::fmt::Write;
 
 use crate::NodeId;
 use crate::behaviors::*;
@@ -707,8 +708,9 @@ impl<T: std::fmt::Display> Tree<T> {
             let childn = 0;
             let level = 0;
             let last = vec![];
-            let mut stack = vec![(node_id, childn, level, last)];
-            while let Some((node_id, childn, level, last)) = stack.pop() {
+            let multiline = None;
+            let mut stack = vec![(node_id, childn, level, last, multiline)];
+            while let Some((node_id, childn, level, last, multiline)) = stack.pop() {
                 debug_assert_eq!(
                     last.len(),
                     level,
@@ -727,23 +729,46 @@ impl<T: std::fmt::Display> Tree<T> {
                     }
                     if level > 0 {
                         if last[level - 1] {
-                            write!(w, "└── ")?;
-                        } else {
+                            if multiline.is_none() {
+                                write!(w, "└── ")?;
+                            } else {
+                                write!(w, "    ")?;
+                            }
+                        } else if multiline.is_none() {
                             write!(w, "├── ")?;
+                        } else {
+                            write!(w, "│   ")?;
                         }
                     }
-                    writeln!(w, "{}", node.data())?;
+                    let mut display_lines = if let Some(multiline) = multiline {
+                        multiline
+                    } else {
+                        let mut display_lines = String::new();
+                        write!(&mut display_lines, "{}", node.data())?;
+                        display_lines
+                            .lines()
+                            .map(|s| s.to_string())
+                            .rev()
+                            .collect::<Vec<_>>()
+                    };
+                    if let Some(line) = display_lines.pop() {
+                        writeln!(w, "{line}")?;
+                        if !display_lines.is_empty() {
+                            stack.push((node_id, childn, level, last, Some(display_lines.clone())));
+                            continue;
+                        }
+                    }
                 }
                 let mut children = node.children().skip(childn);
                 if let Some(child) = children.next() {
                     let mut next_last = last.clone();
                     if children.next().is_some() {
-                        stack.push((node_id, childn + 1, level, last));
+                        stack.push((node_id, childn + 1, level, last, None));
                         next_last.push(false);
                     } else {
                         next_last.push(true);
                     }
-                    stack.push((child.node_id(), 0, level + 1, next_last));
+                    stack.push((child.node_id(), 0, level + 1, next_last, None));
                 }
             }
         }
