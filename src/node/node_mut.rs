@@ -305,7 +305,7 @@ impl<'a, T> NodeMut<'a, T> {
     }
 
     ///
-    /// Remove the first child of this `Node` and return the data that child contained.
+    /// Remove the last child of this `Node` and return the data that child contained.
     /// Returns a `Some`-value if this `Node` has a child to remove; returns a `None`-value
     /// otherwise.
     ///
