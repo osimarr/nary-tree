@@ -8,10 +8,6 @@ This is a fork from the slab_tree crate which is no longer maintained.
 At this initial stage, the main difference (aside bug fix) is that the slab layer is now using the
 slab crate from tokio-rs project.
 
-There is currently a new version being developed which will push changes to the crate's interface.
-This will be released under version v0.5, while version v0.4.x will be maintained as LTS for compatibility.
-The new version is currently on branch `new_interface`.
-
 ## Overview
 
 This library provides a `Tree<T>` struct which allows the creation and manipulation of in-memory trees.
