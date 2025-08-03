@@ -219,6 +219,37 @@ impl<'a, T> NodeRef<'a, T> {
         NextSiblings::new(first_child_id, self.tree)
     }
 
+    ///
+    /// Returns `true` if this `Node` is an orphan (i.e., has no parent and is not the root).
+    /// Returns `false` if this `Node` has a parent or is the root.
+    /// ```
+    /// use nary_tree::tree::TreeBuilder;
+    /// use nary_tree::behaviors::RemoveBehavior::*;
+    /// let mut tree = TreeBuilder::new().with_root(1).build();
+    /// let mut root = tree.root_mut().expect("root doesn't exist?");
+    /// assert!(!root.is_orphan());
+    /// let mut child = root.append(2);
+    /// assert!(!child.is_orphan());
+    /// let grandchild_id = child.append(3).node_id();
+    /// let mut child = root.remove_first(OrphanChildren).unwrap();
+    /// let grandchild = tree.get_mut(grandchild_id).unwrap();
+    /// assert!(grandchild.is_orphan());
+    /// ```
+    pub fn is_orphan(&self) -> bool {
+        self.get_self_as_node().relatives.parent.is_none()
+            && self.tree.root_id() != Some(self.node_id)
+    }
+
+    ///
+    /// Returns `true` if this `Node` has an orphaned ancestor (i.e., last ancestor is not root).
+    /// Returns `false` if last ancestor is root.
+    pub fn has_orphaned_ancestor(&self) -> bool {
+        self.ancestors()
+            .last()
+            .map(|ancestor| ancestor.is_orphan())
+            .unwrap_or_else(|| self.is_orphan())
+    }
+
     /// Depth-first pre-order traversal.
     ///
     /// ```

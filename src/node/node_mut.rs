@@ -164,6 +164,27 @@ impl<'a, T> NodeMut<'a, T> {
     }
 
     ///
+    /// Returns `true` if this `Node` is an orphan (i.e., has no parent and is not the root).
+    /// Returns `false` if this `Node` has a parent or is the root.
+    /// ```
+    /// use nary_tree::tree::TreeBuilder;
+    /// use nary_tree::behaviors::RemoveBehavior::*;
+    /// let mut tree = TreeBuilder::new().with_root(1).build();
+    /// let mut root = tree.root_mut().expect("root doesn't exist?");
+    /// assert!(!root.is_orphan());
+    /// let mut child = root.append(2);
+    /// assert!(!child.is_orphan());
+    /// let grandchild_id = child.append(3).node_id();
+    /// let mut child = root.remove_first(OrphanChildren).unwrap();
+    /// let grandchild = tree.get_mut(grandchild_id).unwrap();
+    /// assert!(grandchild.is_orphan());
+    /// ```
+    pub fn is_orphan(&self) -> bool {
+        self.get_self_as_node().relatives.parent.is_none()
+            && self.tree.root_id() != Some(self.node_id)
+    }
+
+    ///
     /// Appends a new `Node` as this `Node`'s last child (and first child if it has none).
     /// Returns a `NodeMut` pointing to the newly added `Node`.
     ///
@@ -205,22 +226,77 @@ impl<'a, T> NodeMut<'a, T> {
     ///
     pub fn append(&mut self, data: T) -> NodeMut<T> {
         let new_id = self.tree.core_tree.insert(data);
+        self.append_node_id(new_id)
+    }
 
+    ///
+    /// Appends an orphaned `Node` as this `Node`'s first child (and last child if it has none).
+    /// Returns `Some(NodeMut)` pointing to the newly adopted `Node` if it exists and was orphaned.
+    /// Returns `None` if the `Node` was not orphaned or doesn't exist.
+    ///
+    /// ```
+    /// use nary_tree::tree::TreeBuilder;
+    ///
+    /// let mut tree = TreeBuilder::new().with_root(1).build();
+    /// tree.root_mut().expect("root doesn't exist?");
+    ///
+    /// let two_id = tree.insert_orphaned(2);
+    /// let mut root = tree.root_mut().expect("root doesn't exist?");
+    /// let two = root.append_orphaned(two_id);
+    ///
+    /// assert!(two.is_some());
+    /// assert!(root.first_child().is_some());
+    /// assert_eq!(root.first_child().unwrap().data(), &mut 2);
+    ///
+    /// assert!(root.last_child().is_some());
+    /// assert_eq!(root.last_child().unwrap().data(), &mut 2);
+    ///
+    /// let mut child = root.first_child().unwrap();
+    ///
+    /// assert!(child.parent().is_some());
+    /// assert_eq!(child.parent().unwrap().data(), &mut 1);
+    ///
+    ///
+    /// let mut tree = TreeBuilder::new().with_root(1).build();
+    /// tree.set_root(0);
+    /// tree
+    ///     .root_mut()
+    ///     .unwrap()
+    ///     .append(2);
+    /// assert_eq!(tree.root().unwrap().last_child().unwrap().data(), &2);
+    /// let mut s = String::new();
+    /// tree.write_formatted(&mut s).unwrap();
+    /// assert_eq!(&s, "\
+    /// 0
+    /// ├── 1
+    /// └── 2
+    /// ");
+    /// ```
+    ///
+    pub fn append_orphaned(&mut self, orphan_id: NodeId) -> Option<NodeMut<T>> {
+        let orphan = self.tree.get(orphan_id)?;
+        if !orphan.is_orphan() {
+            return None; // Orphan must not have a parent or be the root
+        }
+        Some(self.append_node_id(orphan_id))
+    }
+
+    fn append_node_id(&mut self, node_id: NodeId) -> NodeMut<T> {
         let relatives = self.tree.get_node_relatives(self.node_id);
 
         let prev_sibling = relatives.last_child;
-        self.tree.set_parent(new_id, Some(self.node_id));
-        self.tree.set_prev_sibling(new_id, prev_sibling);
+        self.tree.set_parent(node_id, Some(self.node_id));
+        self.tree.set_prev_sibling(node_id, prev_sibling);
 
-        let first_child = relatives.first_child.or(Some(new_id));
+        let first_child = relatives.first_child.or(Some(node_id));
         self.tree.set_first_child(self.node_id, first_child);
-        self.tree.set_last_child(self.node_id, Some(new_id));
+        self.tree.set_last_child(self.node_id, Some(node_id));
 
-        if let Some(node_id) = prev_sibling {
-            self.tree.set_next_sibling(node_id, Some(new_id));
+        if let Some(sibling) = prev_sibling {
+            self.tree.set_next_sibling(sibling, Some(node_id));
         }
 
-        NodeMut::new(new_id, self.tree)
+        NodeMut::new(node_id, self.tree)
     }
 
     ///
@@ -249,22 +325,61 @@ impl<'a, T> NodeMut<'a, T> {
     ///
     pub fn prepend(&mut self, data: T) -> NodeMut<T> {
         let new_id = self.tree.core_tree.insert(data);
+        self.prepend_node_id(new_id)
+    }
 
+    ///
+    /// Prepends an orphaned `Node` as this `Node`'s first child (and last child if it has none).
+    /// Returns `Some(NodeMut)` pointing to the newly adopted `Node` if it exists and was orphaned.
+    /// Returns `None` if the `Node` was not orphaned or doesn't exist.
+    ///
+    /// ```
+    /// use nary_tree::tree::TreeBuilder;
+    ///
+    /// let mut tree = TreeBuilder::new().with_root(1).build();
+    /// tree.root_mut().expect("root doesn't exist?");
+    ///
+    /// let two_id = tree.insert_orphaned(2);
+    /// let mut root = tree.root_mut().expect("root doesn't exist?");
+    /// let two = root.prepend_orphaned(two_id);
+    ///
+    /// assert!(two.is_some());
+    /// assert!(root.first_child().is_some());
+    /// assert_eq!(root.first_child().unwrap().data(), &mut 2);
+    ///
+    /// assert!(root.last_child().is_some());
+    /// assert_eq!(root.last_child().unwrap().data(), &mut 2);
+    ///
+    /// let mut child = root.first_child().unwrap();
+    ///
+    /// assert!(child.parent().is_some());
+    /// assert_eq!(child.parent().unwrap().data(), &mut 1);
+    /// ```
+    ///
+    pub fn prepend_orphaned(&mut self, orphan_id: NodeId) -> Option<NodeMut<T>> {
+        let orphan = self.tree.get(orphan_id)?;
+        if !orphan.is_orphan() {
+            return None; // Orphan must not have a parent or be the root
+        }
+        Some(self.prepend_node_id(orphan_id))
+    }
+
+    fn prepend_node_id(&mut self, node_id: NodeId) -> NodeMut<T> {
         let relatives = self.tree.get_node_relatives(self.node_id);
 
         let next_sibling = relatives.first_child;
-        self.tree.set_parent(new_id, Some(self.node_id));
-        self.tree.set_next_sibling(new_id, next_sibling);
+        self.tree.set_parent(node_id, Some(self.node_id));
+        self.tree.set_next_sibling(node_id, next_sibling);
 
-        let last_child = relatives.last_child.or(Some(new_id));
-        self.tree.set_first_child(self.node_id, Some(new_id));
+        let last_child = relatives.last_child.or(Some(node_id));
+        self.tree.set_first_child(self.node_id, Some(node_id));
         self.tree.set_last_child(self.node_id, last_child);
 
-        if let Some(node_id) = next_sibling {
-            self.tree.set_prev_sibling(node_id, Some(new_id));
+        if let Some(sibling) = next_sibling {
+            self.tree.set_prev_sibling(sibling, Some(node_id));
         }
 
-        NodeMut::new(new_id, self.tree)
+        NodeMut::new(node_id, self.tree)
     }
 
     ///
@@ -1395,5 +1510,121 @@ mod node_mut_tests {
 
         let three = three.unwrap();
         assert_eq!(three.relatives.parent, None);
+    }
+
+    #[test]
+    fn append_orphaned_success() {
+        let mut tree = Tree::new();
+        tree.set_root(1);
+        let root_id = tree.root_id().unwrap();
+        let orphan_id = tree.insert_orphaned(10);
+
+        let mut root_mut = tree.get_mut(root_id).unwrap();
+        let new_child = root_mut.append_orphaned(orphan_id);
+
+        assert!(new_child.is_some());
+        assert_eq!(new_child.unwrap().data(), &mut 10);
+
+        let root_ref = tree.get(root_id).unwrap();
+        assert_eq!(root_ref.children().count(), 1);
+        assert_eq!(root_ref.first_child().unwrap().data(), &10);
+        assert_eq!(root_ref.last_child().unwrap().data(), &10);
+
+        let orphan_ref = tree.get(orphan_id).unwrap();
+        assert!(!orphan_ref.is_orphan());
+        assert_eq!(orphan_ref.parent().unwrap().node_id(), root_id);
+    }
+
+    #[test]
+    fn append_orphaned_to_node_with_children() {
+        let mut tree = Tree::new();
+        tree.set_root(1);
+        let root_id = tree.root_id().unwrap();
+        let orphan_id = tree.insert_orphaned(10);
+
+        let mut root_mut = tree.get_mut(root_id).unwrap();
+        let first_child_id = root_mut.append(2).node_id();
+        let new_child = root_mut.append_orphaned(orphan_id);
+
+        assert!(new_child.is_some());
+
+        let root_ref = tree.get(root_id).unwrap();
+        assert_eq!(root_ref.children().count(), 2);
+        assert_eq!(root_ref.first_child().unwrap().node_id(), first_child_id);
+        assert_eq!(root_ref.last_child().unwrap().node_id(), orphan_id);
+
+        let orphan_ref = tree.get(orphan_id).unwrap();
+        assert_eq!(orphan_ref.prev_sibling().unwrap().node_id(), first_child_id);
+    }
+
+    #[test]
+    fn append_orphaned_non_orphan_node() {
+        let mut tree = Tree::new();
+        tree.set_root(1);
+        let root_id = tree.root_id().unwrap();
+
+        let mut root_mut = tree.get_mut(root_id).unwrap();
+        let child_id = root_mut.append(2).node_id();
+        let result = root_mut.append_orphaned(child_id);
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn prepend_orphaned_success() {
+        let mut tree = Tree::new();
+        tree.set_root(1);
+        let root_id = tree.root_id().unwrap();
+        let orphan_id = tree.insert_orphaned(10);
+
+        let mut root_mut = tree.get_mut(root_id).unwrap();
+        let new_child = root_mut.prepend_orphaned(orphan_id);
+
+        assert!(new_child.is_some());
+        assert_eq!(new_child.unwrap().data(), &mut 10);
+
+        let root_ref = tree.get(root_id).unwrap();
+        assert_eq!(root_ref.children().count(), 1);
+        assert_eq!(root_ref.first_child().unwrap().data(), &10);
+        assert_eq!(root_ref.last_child().unwrap().data(), &10);
+
+        let orphan_ref = tree.get(orphan_id).unwrap();
+        assert!(!orphan_ref.is_orphan());
+        assert_eq!(orphan_ref.parent().unwrap().node_id(), root_id);
+    }
+
+    #[test]
+    fn prepend_orphaned_to_node_with_children() {
+        let mut tree = Tree::new();
+        tree.set_root(1);
+        let root_id = tree.root_id().unwrap();
+        let orphan_id = tree.insert_orphaned(10);
+
+        let mut root_mut = tree.get_mut(root_id).unwrap();
+        let last_child_id = root_mut.append(2).node_id();
+        let new_child = root_mut.prepend_orphaned(orphan_id);
+
+        assert!(new_child.is_some());
+
+        let root_ref = tree.get(root_id).unwrap();
+        assert_eq!(root_ref.children().count(), 2);
+        assert_eq!(root_ref.first_child().unwrap().node_id(), orphan_id);
+        assert_eq!(root_ref.last_child().unwrap().node_id(), last_child_id);
+
+        let orphan_ref = tree.get(orphan_id).unwrap();
+        assert_eq!(orphan_ref.next_sibling().unwrap().node_id(), last_child_id);
+    }
+
+    #[test]
+    fn prepend_orphaned_non_orphan_node() {
+        let mut tree = Tree::new();
+        tree.set_root(1);
+        let root_id = tree.root_id().unwrap();
+
+        let mut root_mut = tree.get_mut(root_id).unwrap();
+        let child_id = root_mut.append(2).node_id();
+        let result = root_mut.prepend_orphaned(child_id);
+
+        assert!(result.is_none());
     }
 }

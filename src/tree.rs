@@ -153,6 +153,22 @@ impl<T> Tree<T> {
     }
 
     ///
+    /// Inserts a new `Node` into the `Tree` without setting it as the root or linking it to any
+    /// existing nodes.
+    /// This is useful for creating orphaned nodes that can be linked later.
+    /// ```
+    /// use nary_tree::tree::Tree;
+    /// let mut tree = Tree::new();
+    /// let orphaned_id = tree.insert_orphaned(1);
+    /// assert_eq!(tree.get(orphaned_id).unwrap().data(), &1);
+    /// assert!(tree.root().is_none());
+    /// ```
+    ///
+    pub fn insert_orphaned(&mut self, data: T) -> NodeId {
+        self.core_tree.insert(data)
+    }
+
+    ///
     /// Returns the `Tree`'s current capacity.  Capacity is defined as the number of times new
     /// `Node`s can be added to the `Tree` before it must allocate more memory.
     ///
@@ -836,6 +852,47 @@ mod tree_tests {
 
         *root.data() = 2;
         assert_eq!(root.data(), &mut 2);
+    }
+
+    #[test]
+    fn insert_orphaned() {
+        let mut tree = TreeBuilder::new().with_root(1).build();
+        let root_id = tree.root_id().unwrap();
+
+        // Insert an orphaned node.
+        let orphan_id = tree.insert_orphaned(10);
+
+        // The orphaned node should exist and have the correct data.
+        let orphan_node = tree.get(orphan_id).expect("Orphaned node should exist.");
+        assert_eq!(*orphan_node.data(), 10);
+
+        // The orphaned node should not have any relatives.
+        assert!(orphan_node.parent().is_none());
+        assert!(orphan_node.prev_sibling().is_none());
+        assert!(orphan_node.next_sibling().is_none());
+        assert!(orphan_node.first_child().is_none());
+        assert!(orphan_node.last_child().is_none());
+
+        // The original tree structure should be unchanged.
+        assert_eq!(tree.root_id().unwrap(), root_id);
+        let root_node = tree.root().unwrap();
+        assert_eq!(*root_node.data(), 1);
+        assert!(root_node.children().next().is_none());
+    }
+
+    #[test]
+    fn insert_orphaned_in_empty_tree() {
+        let mut tree: Tree<i32> = Tree::new();
+
+        // Insert an orphaned node.
+        let orphan_id = tree.insert_orphaned(10);
+
+        // The orphaned node should exist.
+        let orphan_node = tree.get(orphan_id).expect("Orphaned node should exist.");
+        assert_eq!(*orphan_node.data(), 10);
+
+        // The tree should still have no root.
+        assert!(tree.root_id().is_none());
     }
 
     #[test]
