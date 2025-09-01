@@ -74,7 +74,7 @@ impl<'a, T> NodeRef<'a, T> {
     /// assert!(root.parent().is_none());
     /// ```
     ///
-    pub fn parent(&self) -> Option<NodeRef<T>> {
+    pub fn parent(&self) -> Option<NodeRef<'_, T>> {
         self.get_self_as_node()
             .relatives
             .parent
@@ -95,7 +95,7 @@ impl<'a, T> NodeRef<'a, T> {
     /// assert!(root.prev_sibling().is_none());
     /// ```
     ///
-    pub fn prev_sibling(&self) -> Option<NodeRef<T>> {
+    pub fn prev_sibling(&self) -> Option<NodeRef<'_, T>> {
         self.get_self_as_node()
             .relatives
             .prev_sibling
@@ -116,7 +116,7 @@ impl<'a, T> NodeRef<'a, T> {
     /// assert!(root.next_sibling().is_none());
     /// ```
     ///
-    pub fn next_sibling(&self) -> Option<NodeRef<T>> {
+    pub fn next_sibling(&self) -> Option<NodeRef<'_, T>> {
         self.get_self_as_node()
             .relatives
             .next_sibling
@@ -137,7 +137,7 @@ impl<'a, T> NodeRef<'a, T> {
     /// assert!(root.first_child().is_none());
     /// ```
     ///
-    pub fn first_child(&self) -> Option<NodeRef<T>> {
+    pub fn first_child(&self) -> Option<NodeRef<'_, T>> {
         self.get_self_as_node()
             .relatives
             .first_child
@@ -158,7 +158,7 @@ impl<'a, T> NodeRef<'a, T> {
     /// assert!(root.last_child().is_none());
     /// ```
     ///
-    pub fn last_child(&self) -> Option<NodeRef<T>> {
+    pub fn last_child(&self) -> Option<NodeRef<'_, T>> {
         self.get_self_as_node()
             .relatives
             .last_child
