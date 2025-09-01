@@ -216,7 +216,7 @@ impl<T> Tree<T> {
     /// assert_eq!(root.data(), &1);
     /// ```
     ///
-    pub fn root(&self) -> Option<NodeRef<T>> {
+    pub fn root(&self) -> Option<NodeRef<'_, T>> {
         self.root_id.map(|id| self.new_node_ref(id))
     }
 
@@ -236,7 +236,7 @@ impl<T> Tree<T> {
     /// assert_eq!(root.data(), &mut 2);
     /// ```
     ///
-    pub fn root_mut(&mut self) -> Option<NodeMut<T>> {
+    pub fn root_mut(&mut self) -> Option<NodeMut<'_, T>> {
         self.root_id.map(move |id| self.new_node_mut(id))
     }
 
@@ -259,7 +259,7 @@ impl<T> Tree<T> {
     /// assert_eq!(root.data(), &1);
     /// ```
     ///
-    pub fn get(&self, node_id: NodeId) -> Option<NodeRef<T>> {
+    pub fn get(&self, node_id: NodeId) -> Option<NodeRef<'_, T>> {
         let _ = self.core_tree.get(node_id)?;
         Some(self.new_node_ref(node_id))
     }
@@ -285,7 +285,7 @@ impl<T> Tree<T> {
     /// assert_eq!(root.data(), &mut 2);
     /// ```
     ///
-    pub fn get_mut(&mut self, node_id: NodeId) -> Option<NodeMut<T>> {
+    pub fn get_mut(&mut self, node_id: NodeId) -> Option<NodeMut<'_, T>> {
         let _ = self.core_tree.get_mut(node_id)?;
         Some(self.new_node_mut(node_id))
     }
@@ -595,11 +595,11 @@ impl<T> Tree<T> {
         }
     }
 
-    fn new_node_ref(&self, node_id: NodeId) -> NodeRef<T> {
+    fn new_node_ref(&self, node_id: NodeId) -> NodeRef<'_, T> {
         NodeRef::new(node_id, self)
     }
 
-    fn new_node_mut(&mut self, node_id: NodeId) -> NodeMut<T> {
+    fn new_node_mut(&mut self, node_id: NodeId) -> NodeMut<'_, T> {
         NodeMut::new(node_id, self)
     }
 

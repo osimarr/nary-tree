@@ -14,7 +14,7 @@ pub struct NodeMut<'a, T> {
 }
 
 impl<'a, T> NodeMut<'a, T> {
-    pub(crate) fn new(node_id: NodeId, tree: &mut Tree<T>) -> NodeMut<T> {
+    pub(crate) fn new(node_id: NodeId, tree: &mut Tree<T>) -> NodeMut<'_, T> {
         NodeMut { node_id, tree }
     }
 
@@ -76,7 +76,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert!(root.parent().is_none());
     /// ```
     ///
-    pub fn parent(&mut self) -> Option<NodeMut<T>> {
+    pub fn parent(&mut self) -> Option<NodeMut<'_, T>> {
         self.get_self_as_node()
             .relatives
             .parent
@@ -96,7 +96,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert!(root.prev_sibling().is_none());
     /// ```
     ///
-    pub fn prev_sibling(&mut self) -> Option<NodeMut<T>> {
+    pub fn prev_sibling(&mut self) -> Option<NodeMut<'_, T>> {
         self.get_self_as_node()
             .relatives
             .prev_sibling
@@ -116,7 +116,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert!(root.next_sibling().is_none());
     /// ```
     ///
-    pub fn next_sibling(&mut self) -> Option<NodeMut<T>> {
+    pub fn next_sibling(&mut self) -> Option<NodeMut<'_, T>> {
         self.get_self_as_node()
             .relatives
             .next_sibling
@@ -136,7 +136,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert!(root.first_child().is_none());
     /// ```
     ///
-    pub fn first_child(&mut self) -> Option<NodeMut<T>> {
+    pub fn first_child(&mut self) -> Option<NodeMut<'_, T>> {
         self.get_self_as_node()
             .relatives
             .first_child
@@ -156,7 +156,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert!(root.last_child().is_none());
     /// ```
     ///
-    pub fn last_child(&mut self) -> Option<NodeMut<T>> {
+    pub fn last_child(&mut self) -> Option<NodeMut<'_, T>> {
         self.get_self_as_node()
             .relatives
             .last_child
@@ -224,7 +224,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// ");
     /// ```
     ///
-    pub fn append(&mut self, data: T) -> NodeMut<T> {
+    pub fn append(&mut self, data: T) -> NodeMut<'_, T> {
         let new_id = self.tree.core_tree.insert(data);
         self.append_node_id(new_id)
     }
@@ -273,7 +273,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// ");
     /// ```
     ///
-    pub fn append_orphaned(&mut self, orphan_id: NodeId) -> Option<NodeMut<T>> {
+    pub fn append_orphaned(&mut self, orphan_id: NodeId) -> Option<NodeMut<'_, T>> {
         let orphan = self.tree.get(orphan_id)?;
         if !orphan.is_orphan() {
             return None; // Orphan must not have a parent or be the root
@@ -281,7 +281,7 @@ impl<'a, T> NodeMut<'a, T> {
         Some(self.append_node_id(orphan_id))
     }
 
-    fn append_node_id(&mut self, node_id: NodeId) -> NodeMut<T> {
+    fn append_node_id(&mut self, node_id: NodeId) -> NodeMut<'_, T> {
         let relatives = self.tree.get_node_relatives(self.node_id);
 
         let prev_sibling = relatives.last_child;
@@ -323,7 +323,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert_eq!(child.parent().unwrap().data(), &mut 1);
     /// ```
     ///
-    pub fn prepend(&mut self, data: T) -> NodeMut<T> {
+    pub fn prepend(&mut self, data: T) -> NodeMut<'_, T> {
         let new_id = self.tree.core_tree.insert(data);
         self.prepend_node_id(new_id)
     }
@@ -356,7 +356,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert_eq!(child.parent().unwrap().data(), &mut 1);
     /// ```
     ///
-    pub fn prepend_orphaned(&mut self, orphan_id: NodeId) -> Option<NodeMut<T>> {
+    pub fn prepend_orphaned(&mut self, orphan_id: NodeId) -> Option<NodeMut<'_, T>> {
         let orphan = self.tree.get(orphan_id)?;
         if !orphan.is_orphan() {
             return None; // Orphan must not have a parent or be the root
@@ -364,7 +364,7 @@ impl<'a, T> NodeMut<'a, T> {
         Some(self.prepend_node_id(orphan_id))
     }
 
-    fn prepend_node_id(&mut self, node_id: NodeId) -> NodeMut<T> {
+    fn prepend_node_id(&mut self, node_id: NodeId) -> NodeMut<'_, T> {
         let relatives = self.tree.get_node_relatives(self.node_id);
 
         let next_sibling = relatives.first_child;
@@ -471,7 +471,7 @@ impl<'a, T> NodeMut<'a, T> {
     /// assert_eq!(root.data(), &1);
     /// ```
     ///
-    pub fn as_ref(&self) -> NodeRef<T> {
+    pub fn as_ref(&self) -> NodeRef<'_, T> {
         NodeRef::new(self.node_id, self.tree)
     }
 
